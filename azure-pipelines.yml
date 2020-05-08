@@ -12,12 +12,58 @@ pool:
 steps:
 - task: Gradle@2
   inputs:
-    workingDirectory: ''
-    gradleWrapperFile: 'gradlew'
+    workingDirectory: 'src/Backend/IntegrationService'
+    gradleWrapperFile: 'src/Backend/IntegrationService/gradlew'
     gradleOptions: '-Xmx3072m'
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
+    publishJUnitResults: false
     testResultsFiles: '**/TEST-*.xml'
     tasks: 'build'
+- task: Gradle@2
+  inputs:
+    gradleWrapperFile: 'src/Backend/OrderService/gradlew'
+    workingDirectory: 'src/Backend/OrderService'
+    tasks: 'build'
+    publishJUnitResults: true
+    testResultsFiles: '**/TEST-*.xml'
+    gradleOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.8'
+    jdkArchitectureOption: 'x64'
+    sonarQubeRunAnalysis: false
+- task: Gradle@2
+  inputs:
+    gradleWrapperFile: 'src/Clients/gradlew'
+    workingDirectory: 'src/Clients'
+    tasks: 'build'
+    publishJUnitResults: false
+    gradleOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.8'
+    jdkArchitectureOption: 'x64'
+    sonarQubeRunAnalysis: false
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: $(Build.SourcesDirectory)/src
+    Contents: '**/build/libs/!(buildSrc)*.?ar'
+    TargetFolder: $(build.artifactstagingdirectory)/drop
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: $(Build.SourcesDirectory)/deploy
+    Contents: |
+               *SSH-MRP-Artifacts.ps1
+               *deploy_mrp_app.sh
+               *MongoRecords.js
+    TargetFolder: $(build.artifactstagingdirectory)/deploy
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: $(build.artifactstagingdirectory)/drop
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: $(build.artifactstagingdirectory)/deploy
+    ArtifactName: 'deploy'
+    publishLocation: 'Container'
